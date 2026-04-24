@@ -70,6 +70,21 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
   const [collapsed, setCollapsed] = useState(false);
+  const settingsKeys = new Set([
+    "agents",
+    "models",
+    "skill-pool",
+    "environments",
+    "security",
+    "token-usage",
+    "agent-stats",
+    "backups",
+    "voice-transcription",
+    "debug",
+  ]);
+  const isSettingsGroupActive =
+    settingsKeys.has(selectedKey) ||
+    pluginRoutes.some((route) => route.path.replace(/^\//, "") === selectedKey);
 
   // ── Effects ──────────────────────────────────────────────────────────────
 
@@ -173,6 +188,12 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       icon: <SparkLocalFileLine size={18} />,
       path: "/workspace",
       label: t("nav.workspace"),
+    },
+    {
+      key: "skill-center",
+      icon: <SparkMagicWandLine size={18} />,
+      path: "/skill-center",
+      label: "技能中心",
     },
     {
       key: "skills",
@@ -317,6 +338,11 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
           icon: <SparkLocalFileLine size={16} />,
         },
         {
+          key: "skill-center",
+          label: collapsed ? null : "技能中心",
+          icon: <SparkMagicWandLine size={16} />,
+        },
+        {
           key: "skills",
           label: collapsed ? null : t("nav.skills"),
           icon: <SparkMagicWandLine size={16} />,
@@ -351,6 +377,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "settings-group",
       label: collapsed ? null : t("nav.settings"),
+      className: isSettingsGroupActive ? styles.activeMenuGroup : undefined,
       children: [
         {
           key: "agents",
@@ -476,21 +503,23 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
           </div>
 
           {/* Global settings section */}
-          <Menu
-            mode="inline"
-            selectedKeys={[selectedKey]}
-            openKeys={[
-              ...DEFAULT_OPEN_KEYS,
-              ...(pluginRoutes.length > 0 ? ["plugins-group"] : []),
-            ]}
-            onClick={({ key }) => {
-              const path = KEY_TO_PATH[String(key)] ?? `/${String(key)}`;
-              navigate(path);
-            }}
-            items={settingsMenuItems}
-            theme={isDark ? "dark" : "light"}
-            className={styles.sideMenu}
-          />
+          <div className={styles.settingsSection}>
+            <Menu
+              mode="inline"
+              selectedKeys={[selectedKey]}
+              openKeys={[
+                ...DEFAULT_OPEN_KEYS,
+                ...(pluginRoutes.length > 0 ? ["plugins-group"] : []),
+              ]}
+              onClick={({ key }) => {
+                const path = KEY_TO_PATH[String(key)] ?? `/${String(key)}`;
+                navigate(path);
+              }}
+              items={settingsMenuItems}
+              theme={isDark ? "dark" : "light"}
+              className={styles.sideMenu}
+            />
+          </div>
         </>
       )}
 

@@ -1,13 +1,14 @@
 import type { TFunction } from "i18next";
+import logoUrl from "../../../public/logo.png";
 
 const defaultConfig = {
   theme: {
     colorPrimary: "#FF7F16",
     darkMode: false,
-    prefix: "qwenpaw",
+    prefix: "AI",
     leftHeader: {
       logo: "",
-      title: "Work with QwenPaw",
+      title: "SD AI ",
     },
   },
   sender: {
@@ -19,8 +20,7 @@ const defaultConfig = {
     greeting: "Hello, how can I help you today?",
     description:
       "I am a helpful assistant that can help you with your questions.",
-    avatar:
-      "https://gw.alicdn.com/imgextra/i2/O1CN01xRQe2y1iZA7ZBP06g_!!6000000004426-55-tps-175-235.svg",
+    avatar: logoUrl,
     prompts: [
       {
         value: "Let's start a new journey!",

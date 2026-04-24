@@ -17,7 +17,7 @@ import { toDisplayUrl } from "../utils";
 
 const DEFAULT_USER_ID = "default";
 const DEFAULT_CHANNEL = "console";
-const DEFAULT_SESSION_NAME = "New Chat";
+const DEFAULT_SESSION_NAME = "聊天";
 const ROLE_TOOL = "tool";
 const ROLE_USER = "user";
 const ROLE_ASSISTANT = "assistant";
@@ -80,12 +80,29 @@ interface ExtendedSession extends IAgentScopeRuntimeWebUISession {
   pinned?: boolean;
 }
 
+type ChatListPayload = ChatSpec[] | { chats?: ChatSpec[] } | unknown;
+
 // ---------------------------------------------------------------------------
 // Message conversion helpers: backend flat messages → card-based UI format
 // ---------------------------------------------------------------------------
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function normalizeChatList(payload: ChatListPayload): ChatSpec[] {
+  if (Array.isArray(payload)) return payload;
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "chats" in payload &&
+    Array.isArray((payload as { chats?: unknown }).chats)
+  ) {
+    return (payload as { chats: ChatSpec[] }).chats;
+  }
+
+  console.error("Unexpected chats payload:", payload);
+  return [];
 }
 
 /** Extract plain text from a message's content array. */
@@ -484,8 +501,9 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
 
   /** Apply listChats to sessionList; merge realId and generating by session_id. */
   private applyChatsToSessionList(
-    chats: ChatSpec[],
+    chatsPayload: ChatListPayload,
   ): IAgentScopeRuntimeWebUISession[] {
+    const chats = normalizeChatList(chatsPayload);
     const newList = chats
       .filter((c) => c.id && c.id !== "undefined" && c.id !== "null")
       .map(chatSpecToSession)

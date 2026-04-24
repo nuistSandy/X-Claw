@@ -1,14 +1,9 @@
-import { Layout, Space, Badge, Spin, Tooltip } from "antd";
-import LanguageSwitcher from "../components/LanguageSwitcher/index";
-import ThemeToggleButton from "../components/ThemeToggleButton";
+import { Layout, Space, Badge, Spin, Avatar } from "antd";
 import { useTranslation } from "react-i18next";
 import { Button, Modal } from "@agentscope-ai/design";
 import styles from "./index.module.less";
 import api from "../api";
 import {
-  GITHUB_URL,
-  getDocsUrl,
-  getFaqUrl,
   getReleaseNotesUrl,
   PYPI_URL,
   ONE_HOUR_MS,
@@ -16,11 +11,12 @@ import {
   isStableVersion,
   compareVersions,
 } from "./constants";
-import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CopyOutlined, CheckOutlined, TagOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { USER_PROFILE } from "@/constants/userProfile";
 
 const { Header: AntHeader } = Layout;
 
@@ -51,7 +47,7 @@ function UpdateCodeBlock({ code }: { code: string }) {
 
 export default function Header() {
   const { t, i18n } = useTranslation();
-  const { isDark } = useTheme();
+  const navigate = useNavigate();
   const [version, setVersion] = useState<string>("");
   const [latestVersion, setLatestVersion] = useState<string>("");
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -153,15 +149,15 @@ export default function Header() {
     <>
       <AntHeader className={styles.header}>
         <div className={styles.logoWrapper}>
-          <img
-            src={
-              isDark
-                ? `https://gw.alicdn.com/imgextra/i4/O1CN01L7e39724RlGeJYJ7l_!!6000000007388-55-tps-771-132.svg`
-                : "https://gw.alicdn.com/imgextra/i1/O1CN01sens5C1TuwioeGexL_!!6000000002443-55-tps-771-132.svg"
-            }
-            alt="QwenPaw"
-            className={styles.logoImg}
-          />
+          <div className={styles.brandMark} aria-hidden="true">
+            SU
+          </div>
+          <div className={styles.brandTextGroup}>
+            <span className={styles.brandTitle}>苏电AI通用智能体</span>
+            <span className={styles.brandSubtitle}>
+              Unified Agent Console
+            </span>
+          </div>
           <div className={styles.logoDivider} />
           {version && (
             <Badge
@@ -177,13 +173,32 @@ export default function Header() {
                 }`}
                 onClick={() => hasUpdate && handleOpenUpdateModal()}
               >
-                v{version}
+                {/* v{version} */}
               </span>
             </Badge>
           )}
         </div>
         <Space size="middle">
-          <Tooltip title={t("header.changelog")}>
+          <button
+            type="button"
+            className={styles.userEntry}
+            onClick={() => navigate("/user-center")}
+          >
+            <Avatar
+              src={USER_PROFILE.avatar}
+              size={38}
+              className={styles.userAvatar}
+            />
+            <span className={styles.userMeta}>
+              <span className={styles.userName}>
+                {`${USER_PROFILE.name}（${USER_PROFILE.organization}）`}
+              </span>
+              <span className={styles.userOrg}>
+                {USER_PROFILE.company}
+              </span>
+            </span>
+          </button>
+          {/* <Tooltip title={t("header.changelog")}>
             <Button
               type="text"
               onClick={() => handleNavClick(getReleaseNotesUrl(i18n.language))}
@@ -206,15 +221,15 @@ export default function Header() {
             >
               {t("header.faq")}
             </Button>
-          </Tooltip>
-          <Tooltip title={t("header.github")}>
+          </Tooltip> */}
+          {/* <Tooltip title={t("header.github")}>
             <Button type="text" onClick={() => handleNavClick(GITHUB_URL)}>
               {t("header.github")}
             </Button>
-          </Tooltip>
+          </Tooltip> */}
           <div className={styles.headerDivider} />
-          <LanguageSwitcher />
-          <ThemeToggleButton />
+          {/* <LanguageSwitcher />
+          <ThemeToggleButton /> */}
         </Space>
       </AntHeader>
 

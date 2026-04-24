@@ -47,8 +47,7 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: "http://127.0.0.1:8088",
           changeOrigin: true,
-          ws: true,
-          rewrite: (path) => path.replace(/^\/api/, "")
+          ws: true
         },
         "/channels": {
           target: "http://127.0.0.1:8088",
