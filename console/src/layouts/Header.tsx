@@ -159,7 +159,7 @@ export default function Header() {
             <span className={styles.brandTitle}>通用智能体</span>
           </div>
           <div className={styles.logoDivider} />
-          {version && (
+          {/* {version && (
             <Badge
               dot={!!hasUpdate}
               color="rgba(255, 157, 77, 1)"
@@ -173,10 +173,10 @@ export default function Header() {
                 }`}
                 onClick={() => hasUpdate && handleOpenUpdateModal()}
               >
-                {/* v{version} */}
+                 v{version} 
               </span>
             </Badge>
-          )}
+          )} */}
         </div>
         <Space size="middle">
           <button

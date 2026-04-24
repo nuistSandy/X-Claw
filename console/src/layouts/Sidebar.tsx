@@ -190,12 +190,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       label: t("nav.workspace"),
     },
     {
-      key: "skill-center",
-      icon: <SparkMagicWandLine size={18} />,
-      path: "/skill-center",
-      label: "技能中心",
-    },
-    {
       key: "skills",
       icon: <SparkMagicWandLine size={18} />,
       path: "/skills",
@@ -336,11 +330,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
           key: "workspace",
           label: collapsed ? null : t("nav.workspace"),
           icon: <SparkLocalFileLine size={16} />,
-        },
-        {
-          key: "skill-center",
-          label: collapsed ? null : "技能中心",
-          icon: <SparkMagicWandLine size={16} />,
         },
         {
           key: "skills",
