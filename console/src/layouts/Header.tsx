@@ -17,10 +17,10 @@ import remarkGfm from "remark-gfm";
 import { CopyOutlined, CheckOutlined, TagOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { USER_PROFILE } from "@/constants/userProfile";
+import sdaiIconUrl from "../public/sdai.png";
 
 const { Header: AntHeader } = Layout;
 
-// ── Code block with copy button ───────────────────────────────────────────
 function UpdateCodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
@@ -113,8 +113,8 @@ export default function Header() {
     const lang = i18n.language?.startsWith("zh")
       ? "zh"
       : i18n.language?.startsWith("ru")
-      ? "ru"
-      : "en";
+        ? "ru"
+        : "en";
     const faqLang = lang === "zh" ? "zh" : "en";
     const url = `https://qwenpaw.agentscope.io/docs/faq.${faqLang}.md`;
     fetch(url, { cache: "no-cache" })
@@ -149,14 +149,14 @@ export default function Header() {
     <>
       <AntHeader className={styles.header}>
         <div className={styles.logoWrapper}>
-          <div className={styles.brandMark} aria-hidden="true">
-            SU
-          </div>
+          <img
+            src={sdaiIconUrl}
+            alt=""
+            aria-hidden="true"
+            className={styles.brandIcon}
+          />
           <div className={styles.brandTextGroup}>
-            <span className={styles.brandTitle}>苏电AI通用智能体</span>
-            <span className={styles.brandSubtitle}>
-              Unified Agent Console
-            </span>
+            <span className={styles.brandTitle}>通用智能体</span>
           </div>
           <div className={styles.logoDivider} />
           {version && (
@@ -193,43 +193,10 @@ export default function Header() {
               <span className={styles.userName}>
                 {`${USER_PROFILE.name}（${USER_PROFILE.organization}）`}
               </span>
-              <span className={styles.userOrg}>
-                {USER_PROFILE.company}
-              </span>
+              <span className={styles.userOrg}>{USER_PROFILE.company}</span>
             </span>
           </button>
-          {/* <Tooltip title={t("header.changelog")}>
-            <Button
-              type="text"
-              onClick={() => handleNavClick(getReleaseNotesUrl(i18n.language))}
-            >
-              {t("header.changelog")}
-            </Button>
-          </Tooltip>
-          <Tooltip title={t("header.docs")}>
-            <Button
-              type="text"
-              onClick={() => handleNavClick(getDocsUrl(i18n.language))}
-            >
-              {t("header.docs")}
-            </Button>
-          </Tooltip>
-          <Tooltip title={t("header.faq")}>
-            <Button
-              type="text"
-              onClick={() => handleNavClick(getFaqUrl(i18n.language))}
-            >
-              {t("header.faq")}
-            </Button>
-          </Tooltip> */}
-          {/* <Tooltip title={t("header.github")}>
-            <Button type="text" onClick={() => handleNavClick(GITHUB_URL)}>
-              {t("header.github")}
-            </Button>
-          </Tooltip> */}
           <div className={styles.headerDivider} />
-          {/* <LanguageSwitcher />
-          <ThemeToggleButton /> */}
         </Space>
       </AntHeader>
 
@@ -253,7 +220,6 @@ export default function Header() {
         width={960}
         className={styles.updateModal}
       >
-        {/* Banner area */}
         <div className={styles.updateModalBanner}>
           <div className={styles.updateModalBannerLeft}>
             <span className={styles.updateModalVersionTag}>
@@ -268,7 +234,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Markdown content */}
         <div className={styles.updateModalBody}>
           {updateMarkdown ? (
             <ReactMarkdown
