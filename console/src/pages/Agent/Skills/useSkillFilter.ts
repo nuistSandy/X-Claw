@@ -5,11 +5,15 @@ interface Filterable {
   name: string;
   description?: string;
   tags?: string[];
+  source?: string;
 }
+
+type SkillTypeFilter = "all" | "builtin" | "custom";
 
 export function useSkillFilter<T extends Filterable>(skills: T[]) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchTags, setSearchTags] = useState<string[]>([]);
+  const [skillType, setSkillType] = useState<SkillTypeFilter>("all");
 
   const allTags = useMemo(
     () => Array.from(new Set(skills.flatMap((s) => s.tags || []))).sort(),
@@ -34,15 +38,21 @@ export function useSkillFilter<T extends Filterable>(skills: T[]) {
       const matchesTag =
         selectedTags.length === 0 ||
         selectedTags.some((tag) => skill.tags?.includes(tag));
-      return matchesText && matchesTag;
+      const matchesType =
+        skillType === "all" ||
+        (skillType === "builtin" && skill.source === "builtin") ||
+        (skillType === "custom" && skill.source !== "builtin");
+      return matchesText && matchesTag && matchesType;
     });
-  }, [skills, searchQuery, selectedTags]);
+  }, [skills, searchQuery, selectedTags, skillType]);
 
   return {
     searchQuery,
     setSearchQuery,
     searchTags,
     setSearchTags,
+    skillType,
+    setSkillType,
     allTags,
     filteredSkills,
   };
