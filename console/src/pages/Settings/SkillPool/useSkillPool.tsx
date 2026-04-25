@@ -115,6 +115,8 @@ export function useSkillPool() {
     setSearchQuery,
     searchTags,
     setSearchTags,
+    skillType,
+    setSkillType,
     allTags,
     filteredSkills,
   } = useSkillFilter(skills);
@@ -998,6 +1000,8 @@ export function useSkillPool() {
     setSearchQuery,
     searchTags,
     setSearchTags,
+    skillType,
+    setSkillType,
     allTags,
     form,
     drawerContent,

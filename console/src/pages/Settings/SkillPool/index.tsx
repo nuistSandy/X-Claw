@@ -207,6 +207,17 @@ function SkillPoolPage() {
                   )
                 }
               />
+              <Select
+                className={styles.typeSelect}
+                placeholder={t("skills.filterByType")}
+                value={pool.skillType}
+                onChange={pool.setSkillType}
+                style={{ minWidth: 120 }}
+              >
+                <Select.Option value="all">{t("全部")}</Select.Option>
+                <Select.Option value="builtin">{t("skillPool.builtin")}</Select.Option>
+                <Select.Option value="custom">{t("skillPool.custom")}</Select.Option>
+              </Select>
             </div>
             <div className={styles.toolbarRight}>
               <div className={styles.viewToggle}>

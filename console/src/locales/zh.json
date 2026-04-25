@@ -326,6 +326,7 @@
     "exitBatch": "退出批量",
     "noSearchResults": "未找到匹配的技能",
     "filterByTag": "按标签筛选",
+    "filterByType": "按类型筛选",
     "noTags": "暂无标签"
   },
   "skillPool": {
