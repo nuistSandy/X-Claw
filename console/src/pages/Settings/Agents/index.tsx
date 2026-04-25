@@ -12,6 +12,11 @@ import { AgentTable, AgentModal } from "./components";
 import { PageHeader } from "@/components/PageHeader";
 import { reorderAgents } from "./reorder";
 import styles from "./index.module.less";
+/****
+ * 
+ * 创建智能体，如果放开，改为true就行了
+ */
+const SHOW_CREATE_AGENT_BUTTON = false;
 
 export default function AgentsPage() {
   const { t } = useTranslation();
@@ -162,13 +167,15 @@ export default function AgentsPage() {
         current={t("agent.agents")}
         extra={
           <div className={styles.headerRight}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreate}
-            >
-              {t("agent.create")}
-            </Button>
+            {SHOW_CREATE_AGENT_BUTTON && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreate}
+              >
+                {t("agent.create")}
+              </Button>
+            )}
           </div>
         }
       />

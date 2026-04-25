@@ -5,8 +5,8 @@ import styles from "./index.module.less";
 const ChatHeaderTitle: React.FC = () => {
   const { sessions, currentSessionId } = useChatAnywhereSessionsState();
   const currentSession = sessions.find((s) => s.id === currentSessionId);
-  const chatName = currentSession?.name || "聊天";
-
+  // const chatName = currentSession?.name || "聊天";
+const chatName="";
   return <span className={styles.chatName}>{chatName}</span>;
 };
 

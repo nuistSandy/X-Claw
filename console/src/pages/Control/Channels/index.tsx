@@ -54,9 +54,13 @@ function ChannelsPage() {
   const handleCardClick = (key: ChannelKey) => {
     setActiveKey(key);
     setDrawerOpen(true);
-    const channelConfig = channels[key] || { enabled: false, bot_prefix: "" };
+    const channelConfig = channels[key] || {
+      enabled: key === "xmpp",
+      bot_prefix: "",
+    };
     form.setFieldsValue({
       ...channelConfig,
+      enabled: key === "xmpp" ? true : channelConfig.enabled,
       filter_tool_messages: !channelConfig.filter_tool_messages,
       filter_thinking: !channelConfig.filter_thinking,
     });

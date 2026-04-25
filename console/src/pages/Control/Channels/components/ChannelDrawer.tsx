@@ -1119,6 +1119,7 @@ export function ChannelDrawer({
             : t("channels.channelSettings")}
       </span>
             {activeKey &&
+                activeKey !== "xmpp" &&
                 CHANNEL_DOC_EN_URLS[activeKey] &&
                 CHANNEL_DOC_ZH_URLS[activeKey] && (
                     <Button
@@ -1198,12 +1199,21 @@ export function ChannelDrawer({
                     </Form.Item>
 
                     {activeKey !== "voice" && (
-                        <Form.Item name="bot_prefix" label="Bot Prefix">
-                            <Input placeholder="@bot"/>
+                        <Form.Item
+                            name="bot_prefix"
+                            label={
+                                activeKey === "xmpp" ? "通用智能体ID" : "Bot Prefix"
+                            }
+                        >
+                            <Input
+                                placeholder={
+                                    activeKey === "xmpp" ? "智能体ID" : "@bot"
+                                }
+                            />
                         </Form.Item>
                     )}
 
-                    {activeKey !== "console" && (
+                    {activeKey !== "console" && activeKey !== "xmpp" && (
                         <>
                             <Form.Item
                                 name="filter_tool_messages"
@@ -1224,11 +1234,13 @@ export function ChannelDrawer({
                         </>
                     )}
 
-                    {isBuiltin
-                        ? renderBuiltinExtraFields(activeKey)
-                        : renderCustomExtraFields(initialValues)}
+                    {activeKey !== "xmpp" &&
+                        (isBuiltin
+                            ? renderBuiltinExtraFields(activeKey)
+                            : renderCustomExtraFields(initialValues))}
 
-                    {CHANNELS_WITH_ACCESS_CONTROL.includes(activeKey) &&
+                    {activeKey !== "xmpp" &&
+                        CHANNELS_WITH_ACCESS_CONTROL.includes(activeKey) &&
                         renderAccessControlFields()}
                 </Form>
             )}

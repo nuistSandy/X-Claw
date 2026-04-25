@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../../../api";
 import { useAgentStore } from "../../../stores/agentStore";
 
+const VISIBLE_CHANNEL_TYPES = ["console", "xmpp"];
+
 export function useChannels() {
   const { selectedAgent } = useAgentStore();
   const [channels, setChannels] = useState<
@@ -35,6 +37,7 @@ export function useChannels() {
   const builtinOrder = useMemo(
     () => [
       "console",
+      "xmpp",
       "dingtalk",
       "feishu",
       "imessage",
@@ -48,10 +51,11 @@ export function useChannels() {
   );
 
   const orderedKeys = useMemo(
-    () => [
-      ...builtinOrder.filter((k) => channelTypes.includes(k)),
-      ...channelTypes.filter((k) => !builtinOrder.includes(k)),
-    ],
+    () =>
+      [
+        ...builtinOrder.filter((k) => channelTypes.includes(k)),
+        ...channelTypes.filter((k) => !builtinOrder.includes(k)),
+      ].filter((key) => VISIBLE_CHANNEL_TYPES.includes(key)),
     [builtinOrder, channelTypes],
   );
 
