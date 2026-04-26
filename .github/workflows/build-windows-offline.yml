@@ -1,0 +1,207 @@
+name: Build Windows Offline Installer
+
+on:
+  # Manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      build_nsis:
+        description: "Also build NSIS installer (Setup.exe)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------------
+      # 1. Build console frontend
+      # ----------------------------------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: console/package-lock.json
+
+      - name: Build console frontend
+        run: |
+          cd console
+          npm ci
+          npm run build
+
+      # ----------------------------------------------------------------
+      # 2. Copy frontend to package and build wheel
+      # ----------------------------------------------------------------
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build wheel
+        run: |
+          # Copy console build output to package directory
+          $consoleDest = "src\qwenpaw\console"
+          if (Test-Path $consoleDest) {
+            Remove-Item -Path "$consoleDest\*" -Recurse -Force -ErrorAction SilentlyContinue
+          } else {
+            New-Item -ItemType Directory -Force -Path $consoleDest | Out-Null
+          }
+          Copy-Item -Path "console\dist\*" -Destination $consoleDest -Recurse -Force
+
+          # Build wheel
+          python -m pip install --quiet build
+          python -m build --outdir dist .
+        env:
+          # Ensure build includes console files
+          QWENPAW_BUILD_CONSOLE: "1"
+
+      # ----------------------------------------------------------------
+      # 3. Create virtual environment and install qwenpaw
+      # ----------------------------------------------------------------
+      - name: Install qwenpaw with dependencies
+        run: |
+          python -m venv .venv
+          & .venv\Scripts\Activate.ps1
+
+          # Upgrade pip
+          python -m pip install --upgrade pip
+
+          # Install the wheel with all optional dependencies
+          $wheel = (Get-ChildItem -Path dist\qwenpaw-*.whl | Select-Object -First 1).FullName
+          python -m pip install "$wheel[full]"
+
+          # Verify installation
+          python -c "import qwenpaw; print(f'qwenpaw {qwenpaw.__version__.__version__} OK')"
+          python -c "import certifi; print(f'certifi OK: {certifi.where()}')"
+
+      # ----------------------------------------------------------------
+      # 4. Run PyInstaller
+      # ----------------------------------------------------------------
+      - name: Install PyInstaller
+        run: |
+          & .venv\Scripts\Activate.ps1
+          python -m pip install pyinstaller
+
+      - name: Run PyInstaller
+        run: |
+          & .venv\Scripts\Activate.ps1
+          pyinstaller scripts\pack\qwenpaw.spec --noconfirm
+
+      - name: Verify output
+        run: |
+          $exePath = "dist\QwenPaw\QwenPaw.exe"
+          if (Test-Path $exePath) {
+            $size = (Get-Item $exePath).Length / 1MB
+            Write-Host "QwenPaw.exe built successfully ($([math]::Round($size, 1)) MB)"
+          } else {
+            Write-Error "QwenPaw.exe not found!"
+          }
+
+      # ----------------------------------------------------------------
+      # 5. (Optional) Build NSIS installer
+      # ----------------------------------------------------------------
+      - name: Install NSIS
+        if: ${{ inputs.build_nsis == 'true' }}
+        run: choco install nsis -y
+
+      - name: Build NSIS installer
+        if: ${{ inputs.build_nsis == 'true' }}
+        run: |
+          # Read version
+          $verFile = "src\qwenpaw\__version__.py"
+          $version = ""
+          foreach ($line in Get-Content $verFile) {
+            if ($line -match '__version__\s*=\s*"([^"]+)"') {
+              $version = $Matches[1]
+              break
+            }
+          }
+          if (-not $version) { $version = "0.0.0" }
+          Write-Host "Version: $version"
+
+          # Create portable NSIS script for PyInstaller output
+          $nsiContent = @"
+          !include "MUI2.nsh"
+          !define MUI_ABORTWARNING
+          !define MUI_ICON "scripts\pack\assets\icon.ico"
+          !define MUI_UNICON "scripts\pack\assets\icon.ico"
+
+          Name "QwenPaw Desktop"
+          OutFile "dist\QwenPaw-Setup-$version.exe"
+          InstallDir `$LOCALAPPDATA\QwenPaw
+          InstallDirRegKey HKCU "Software\QwenPaw" "InstallPath"
+          RequestExecutionLevel user
+
+          !insertmacro MUI_PAGE_DIRECTORY
+          !insertmacro MUI_PAGE_INSTFILES
+          !insertmacro MUI_PAGE_FINISH
+          !insertmacro MUI_UNPAGE_CONFIRM
+          !insertmacro MUI_UNPAGE_INSTFILES
+          !insertmacro MUI_LANGUAGE "SimpChinese"
+
+          Section "QwenPaw Desktop" SEC01
+            SetOutPath "`$INSTDIR"
+            File /r "dist\QwenPaw\*.*"
+            WriteRegStr HKCU "Software\QwenPaw" "InstallPath" "`$INSTDIR"
+            WriteUninstaller "`$INSTDIR\Uninstall.exe"
+            CreateShortcut "`$SMPROGRAMS\QwenPaw Desktop.lnk" "`$INSTDIR\QwenPaw.exe" "" "`$INSTDIR\QwenPaw.exe" 0
+            CreateShortcut "`$DESKTOP\QwenPaw Desktop.lnk" "`$INSTDIR\QwenPaw.exe" "" "`$INSTDIR\QwenPaw.exe" 0
+            CreateShortcut "`$SMPROGRAMS\QwenPaw Desktop (Debug).lnk" "`$INSTDIR\QwenPaw-Debug\QwenPaw-Debug.exe" "" "`$INSTDIR\QwenPaw-Debug\QwenPaw-Debug.exe" 0
+          SectionEnd
+
+          Section "Uninstall"
+            Delete "`$SMPROGRAMS\QwenPaw Desktop.lnk"
+            Delete "`$SMPROGRAMS\QwenPaw Desktop (Debug).lnk"
+            Delete "`$DESKTOP\QwenPaw Desktop.lnk"
+            RMDir /r "`$INSTDIR"
+            DeleteRegKey HKCU "Software\QwenPaw"
+          SectionEnd
+"@
+          $nsiContent | Set-Content -Path "dist\portable.nsi" -Encoding ASCII
+
+          # Build NSIS installer
+          makensis dist\portable.nsi
+
+          if (Test-Path "dist\QwenPaw-Setup-$version.exe") {
+            $size = (Get-Item "dist\QwenPaw-Setup-$version.exe").Length / 1MB
+            Write-Host "NSIS installer built ($([math]::Round($size, 1)) MB)"
+          } else {
+            Write-Error "NSIS installer not found!"
+          }
+
+      # ----------------------------------------------------------------
+      # 6. Upload artifacts
+      # ----------------------------------------------------------------
+      - name: Upload portable folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: QwenPaw-Portable-Windows
+          path: dist/QwenPaw/
+          retention-days: 7
+
+      - name: Upload debug folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: QwenPaw-Debug-Windows
+          path: dist/QwenPaw-Debug/
+          retention-days: 7
+
+      - name: Upload NSIS installer
+        if: ${{ inputs.build_nsis == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: QwenPaw-Setup-Installer
+          path: dist/QwenPaw-Setup-*.exe
+          retention-days: 7

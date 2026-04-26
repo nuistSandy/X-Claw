@@ -129,24 +129,44 @@ def desktop_cmd(
         logger.warning("SSL_CERT_FILE not set on environment")
 
     is_windows = sys.platform == "win32"
+    is_frozen = getattr(sys, "frozen", False)
+
+    # Build the command to launch the backend server subprocess.
+    # In a PyInstaller frozen bundle, sys.executable is the .exe itself
+    # and Click routes subcommands directly, so we omit "-m qwenpaw".
+    # In a normal Python environment, we use "python -m qwenpaw app ...".
+    if is_frozen:
+        cmd = [
+            sys.executable,
+            "app",
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--log-level",
+            log_level,
+        ]
+    else:
+        cmd = [
+            sys.executable,
+            "-m",
+            "qwenpaw",
+            "app",
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--log-level",
+            log_level,
+        ]
+
     proc = None
     manually_terminated = (
         False  # Track if we intentionally terminated the process
     )
     try:
         proc = subprocess.Popen(
-            [
-                sys.executable,
-                "-m",
-                "qwenpaw",
-                "app",
-                "--host",
-                host,
-                "--port",
-                str(port),
-                "--log-level",
-                log_level,
-            ],
+            cmd,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE if is_windows else sys.stdout,
             stderr=subprocess.PIPE if is_windows else sys.stderr,
