@@ -1,7 +1,6 @@
 name: Build Windows Offline Installer
 
 on:
-  # Manual trigger from GitHub Actions tab
   workflow_dispatch:
     inputs:
       build_nsis:
@@ -32,13 +31,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: console/package-lock.json
 
       - name: Build console frontend
         run: |
           cd console
-          npm ci
+          npm install
           npm run build
 
       # ----------------------------------------------------------------
@@ -51,7 +48,6 @@ jobs:
 
       - name: Build wheel
         run: |
-          # Copy console build output to package directory
           $consoleDest = "src\qwenpaw\console"
           if (Test-Path $consoleDest) {
             Remove-Item -Path "$consoleDest\*" -Recurse -Force -ErrorAction SilentlyContinue
@@ -59,8 +55,6 @@ jobs:
             New-Item -ItemType Directory -Force -Path $consoleDest | Out-Null
           }
           Copy-Item -Path "console\dist\*" -Destination $consoleDest -Recurse -Force
-
-          # Build wheel
           python -m pip install --quiet build
           python -m build --outdir dist .
 
@@ -71,15 +65,9 @@ jobs:
         run: |
           python -m venv .venv
           & .venv\Scripts\Activate.ps1
-
-          # Upgrade pip
           python -m pip install --upgrade pip
-
-          # Install the wheel with all optional dependencies
           $wheel = (Get-ChildItem -Path dist\qwenpaw-*.whl | Select-Object -First 1).FullName
           python -m pip install "$wheel[full]"
-
-          # Verify installation
           python -c "import qwenpaw; print('qwenpaw OK')"
           python -c "import certifi; print('certifi OK')"
 
@@ -116,7 +104,6 @@ jobs:
       - name: Build NSIS installer
         if: ${{ inputs.build_nsis == 'true' }}
         run: |
-          # Read version
           $verFile = "src\qwenpaw\__version__.py"
           $version = ""
           foreach ($line in Get-Content $verFile) {
@@ -127,11 +114,8 @@ jobs:
           }
           if (-not $version) { $version = "0.0.0" }
           Write-Host "Version: $version"
-
-          # Build NSIS installer using the standalone script
           makensis /DQWENPAW_VERSION=$version scripts\pack\portable.nsi
           if ($LASTEXITCODE -ne 0) { throw "makensis failed" }
-
           $setupExe = "dist\QwenPaw-Setup-$version.exe"
           if (Test-Path $setupExe) {
             $size = (Get-Item $setupExe).Length / 1MB
