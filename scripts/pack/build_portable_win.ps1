@@ -54,7 +54,6 @@ if (Test-Path $VenvDir) { Remove-Item -Recurse -Force $VenvDir }
 
 python -m venv $VenvDir
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
-$VenvPip = Join-Path $VenvDir "Scripts\pip.exe"
 
 & $VenvPython -m pip install --upgrade pip
 $WheelFile = (Get-ChildItem -Path (Join-Path $DistDir "qwenpaw-*.whl") | Select-Object -First 1).FullName
@@ -62,8 +61,8 @@ $WheelFile = (Get-ChildItem -Path (Join-Path $DistDir "qwenpaw-*.whl") | Select-
 if ($LASTEXITCODE -ne 0) { throw "pip install qwenpaw failed" }
 
 # Verify
-& $VenvPython -c "import qwenpaw; print(f'qwenpaw OK')"
-& $VenvPython -c "import certifi; print(f'certifi OK')"
+& $VenvPython -c "import qwenpaw; print('qwenpaw OK')"
+& $VenvPython -c "import certifi; print('certifi OK')"
 
 # ---- Step 4: Install PyInstaller ----
 Write-Host "`n== Step 4: Installing PyInstaller =="
@@ -110,45 +109,9 @@ if ($NsisAvailable) {
     }
     if (-not $Version) { $Version = "0.0.0" }
 
-    $NsiContent = @"
-!include "MUI2.nsh"
-!define MUI_ABORTWARNING
-!define MUI_ICON "scripts\pack\assets\icon.ico"
-!define MUI_UNICON "scripts\pack\assets\icon.ico"
-
-Name "QwenPaw Desktop"
-OutFile "dist\QwenPaw-Setup-$Version.exe"
-InstallDir `$LOCALAPPDATA\QwenPaw
-InstallDirRegKey HKCU "Software\QwenPaw" "InstallPath"
-RequestExecutionLevel user
-
-!insertmacro MUI_PAGE_DIRECTORY
-!insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_PAGE_FINISH
-!insertmacro MUI_UNPAGE_CONFIRM
-!insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "SimpChinese"
-
-Section "QwenPaw Desktop" SEC01
-  SetOutPath "`$INSTDIR"
-  File /r "dist\QwenPaw\*.*"
-  WriteRegStr HKCU "Software\QwenPaw" "InstallPath" "`$INSTDIR"
-  WriteUninstaller "`$INSTDIR\Uninstall.exe"
-  CreateShortcut "`$SMPROGRAMS\QwenPaw Desktop.lnk" "`$INSTDIR\QwenPaw.exe" "" "`$INSTDIR\QwenPaw.exe" 0
-  CreateShortcut "`$DESKTOP\QwenPaw Desktop.lnk" "`$INSTDIR\QwenPaw.exe" "" "`$INSTDIR\QwenPaw.exe" 0
-  CreateShortcut "`$SMPROGRAMS\QwenPaw Desktop (Debug).lnk" "`$INSTDIR\QwenPaw-Debug\QwenPaw-Debug.exe" "" "`$INSTDIR\QwenPaw-Debug\QwenPaw-Debug.exe" 0
-SectionEnd
-
-Section "Uninstall"
-  Delete "`$SMPROGRAMS\QwenPaw Desktop.lnk"
-  Delete "`$SMPROGRAMS\QwenPaw Desktop (Debug).lnk"
-  Delete "`$DESKTOP\QwenPaw Desktop.lnk"
-  RMDir /r "`$INSTDIR"
-  DeleteRegKey HKCU "Software\QwenPaw"
-SectionEnd
-"@
-    $NsiContent | Set-Content -Path (Join-Path $DistDir "portable.nsi") -Encoding ASCII
-    makensis (Join-Path $DistDir "portable.nsi")
+    # Build NSIS installer using the standalone script
+    $NsiScript = Join-Path $PSScriptRoot "portable.nsi"
+    makensis /DQWENPAW_VERSION=$Version $NsiScript
     if ($LASTEXITCODE -ne 0) { throw "makensis failed" }
 
     $SetupExe = Join-Path $DistDir "QwenPaw-Setup-$Version.exe"

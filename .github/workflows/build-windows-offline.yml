@@ -63,9 +63,6 @@ jobs:
           # Build wheel
           python -m pip install --quiet build
           python -m build --outdir dist .
-        env:
-          # Ensure build includes console files
-          QWENPAW_BUILD_CONSOLE: "1"
 
       # ----------------------------------------------------------------
       # 3. Create virtual environment and install qwenpaw
@@ -83,8 +80,8 @@ jobs:
           python -m pip install "$wheel[full]"
 
           # Verify installation
-          python -c "import qwenpaw; print(f'qwenpaw {qwenpaw.__version__.__version__} OK')"
-          python -c "import certifi; print(f'certifi OK: {certifi.where()}')"
+          python -c "import qwenpaw; print('qwenpaw OK')"
+          python -c "import certifi; print('certifi OK')"
 
       # ----------------------------------------------------------------
       # 4. Run PyInstaller
@@ -131,51 +128,13 @@ jobs:
           if (-not $version) { $version = "0.0.0" }
           Write-Host "Version: $version"
 
-          # Create portable NSIS script for PyInstaller output
-          $nsiContent = @"
-          !include "MUI2.nsh"
-          !define MUI_ABORTWARNING
-          !define MUI_ICON "scripts\pack\assets\icon.ico"
-          !define MUI_UNICON "scripts\pack\assets\icon.ico"
+          # Build NSIS installer using the standalone script
+          makensis /DQWENPAW_VERSION=$version scripts\pack\portable.nsi
+          if ($LASTEXITCODE -ne 0) { throw "makensis failed" }
 
-          Name "QwenPaw Desktop"
-          OutFile "dist\QwenPaw-Setup-$version.exe"
-          InstallDir `$LOCALAPPDATA\QwenPaw
-          InstallDirRegKey HKCU "Software\QwenPaw" "InstallPath"
-          RequestExecutionLevel user
-
-          !insertmacro MUI_PAGE_DIRECTORY
-          !insertmacro MUI_PAGE_INSTFILES
-          !insertmacro MUI_PAGE_FINISH
-          !insertmacro MUI_UNPAGE_CONFIRM
-          !insertmacro MUI_UNPAGE_INSTFILES
-          !insertmacro MUI_LANGUAGE "SimpChinese"
-
-          Section "QwenPaw Desktop" SEC01
-            SetOutPath "`$INSTDIR"
-            File /r "dist\QwenPaw\*.*"
-            WriteRegStr HKCU "Software\QwenPaw" "InstallPath" "`$INSTDIR"
-            WriteUninstaller "`$INSTDIR\Uninstall.exe"
-            CreateShortcut "`$SMPROGRAMS\QwenPaw Desktop.lnk" "`$INSTDIR\QwenPaw.exe" "" "`$INSTDIR\QwenPaw.exe" 0
-            CreateShortcut "`$DESKTOP\QwenPaw Desktop.lnk" "`$INSTDIR\QwenPaw.exe" "" "`$INSTDIR\QwenPaw.exe" 0
-            CreateShortcut "`$SMPROGRAMS\QwenPaw Desktop (Debug).lnk" "`$INSTDIR\QwenPaw-Debug\QwenPaw-Debug.exe" "" "`$INSTDIR\QwenPaw-Debug\QwenPaw-Debug.exe" 0
-          SectionEnd
-
-          Section "Uninstall"
-            Delete "`$SMPROGRAMS\QwenPaw Desktop.lnk"
-            Delete "`$SMPROGRAMS\QwenPaw Desktop (Debug).lnk"
-            Delete "`$DESKTOP\QwenPaw Desktop.lnk"
-            RMDir /r "`$INSTDIR"
-            DeleteRegKey HKCU "Software\QwenPaw"
-          SectionEnd
-"@
-          $nsiContent | Set-Content -Path "dist\portable.nsi" -Encoding ASCII
-
-          # Build NSIS installer
-          makensis dist\portable.nsi
-
-          if (Test-Path "dist\QwenPaw-Setup-$version.exe") {
-            $size = (Get-Item "dist\QwenPaw-Setup-$version.exe").Length / 1MB
+          $setupExe = "dist\QwenPaw-Setup-$version.exe"
+          if (Test-Path $setupExe) {
+            $size = (Get-Item $setupExe).Length / 1MB
             Write-Host "NSIS installer built ($([math]::Round($size, 1)) MB)"
           } else {
             Write-Error "NSIS installer not found!"
